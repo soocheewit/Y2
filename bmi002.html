@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำนวณ BMI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EEF1ED;
+    --card: #FFFFFF;
+    --inset: #EEF1ED;
+    --ink: #16241F;
+    --ink-soft: #51625C;
+    --accent: #2F6F5E;
+    --line: #DCE3DE;
+    --shadow: rgba(22,36,31,0.05);
+
+    --c-under: #6F9BC4;
+    --c-normal: #2F6F5E;
+    --c-over: #D9A441;
+    --c-obese1: #CC7A3D;
+    --c-obese2: #BD4B3E;
+  }
+
+  html[data-theme="dark"]{
+    --bg: #11181B;
+    --card: #1B2422;
+    --inset: #222C29;
+    --ink: #EDF1EE;
+    --ink-soft: #9FB0AA;
+    --accent: #5FA08C;
+    --line: #2B3633;
+    --shadow: rgba(0,0,0,0.35);
+
+    --c-under: #7FB0DE;
+    --c-normal: #4FA98F;
+    --c-over: #E8B85A;
+    --c-obese1: #E08F52;
+    --c-obese2: #D9685A;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    transition: background-color .25s ease, color .25s ease;
+  }
+
+  .wrap{
+    width: 100%;
+    max-width: 860px;
+  }
+
+  .topbar{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .eyebrow{
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  h1{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .theme-toggle{
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s, transform .15s;
+  }
+  .theme-toggle:hover{ transform: translateY(-1px); }
+  .theme-toggle svg{ width: 20px; height: 20px; }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 36px;
+    box-shadow: 0 1px 2px var(--shadow);
+    transition: background-color .25s ease, border-color .25s ease;
+  }
+
+  @media (max-width: 620px){
+    .card{ grid-template-columns: 1fr; }
+  }
+
+  /* ---- form ---- */
+  .unit-toggle{
+    display: inline-flex;
+    background: var(--inset);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 24px;
+    gap: 4px;
+  }
+  .unit-toggle button{
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: background .15s, color .15s;
+  }
+  .unit-toggle button.active{
+    background: var(--ink);
+    color: var(--card);
+  }
+
+  label{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .field{ margin-bottom: 18px; }
+
+  .input-row{
+    display: flex;
+    align-items: stretch;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color .15s;
+  }
+  .input-row:focus-within{
+    border-color: var(--accent);
+  }
+
+  input[type="number"]{
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 12px 14px;
+    color: var(--ink);
+    background: transparent;
+    width: 100%;
+    min-width: 0;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"]{ -moz-appearance: textfield; }
+
+  .unit-suffix{
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    background: var(--inset);
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .result-block{
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+
+  .bmi-number{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .bmi-category{
+    margin-top: 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .bmi-hint{
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .ideal-weight{
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    min-height: 20px;
+  }
+
+  .advice-block{
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--inset);
+    display: none;
+  }
+  .advice-title{
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .advice-text{
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  /* ---- gauge ---- */
+  .gauge-panel{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .gauge-label{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+  }
+
+  .gauge-area{
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    height: 280px;
+  }
+
+  .gauge-bar{
+    position: relative;
+    width: 34px;
+    height: 100%;
+    border-radius: 17px;
+    background: linear-gradient(
+      to top,
+      var(--c-under) 0%,
+      var(--c-under) 21.43%,
+      var(--c-normal) 21.43%,
+      var(--c-normal) 42.86%,
+      var(--c-over) 42.86%,
+      var(--c-over) 52.38%,
+      var(--c-obese1) 52.38%,
+      var(--c-obese1) 76.19%,
+      var(--c-obese2) 76.19%,
+      var(--c-obese2) 100%
+    );
+    box-shadow: inset 0 0 0 1px var(--shadow);
+  }
+
+  .gauge-marker{
+    position: absolute;
+    left: 50%;
+    bottom: 0%;
+    transform: translate(-50%, 50%);
+    transition: bottom .35s cubic-bezier(.2,.8,.2,1);
+    width: 0; height: 0;
+  }
+  .gauge-marker .pin{
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px; height: 16px;
+    background: var(--ink);
+    border: 3px solid var(--card);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+  .gauge-marker .tag{
+    position: absolute;
+    left: 26px;
+    top: -11px;
+    background: var(--ink);
+    color: var(--card);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .gauge-marker .tag::before{
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: var(--ink);
+  }
+
+  .gauge-ticks{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: right;
+    padding-bottom: 0;
+  }
+
+  .gauge-legend{
+    margin-top: 18px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .gauge-legend .row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gauge-legend .dot{
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .sr-only{
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <p class="eyebrow">เครื่องคำนวณสุขภาพ</p>
+      <h1>คำนวณดัชนีมวลกาย (BMI)</h1>
+    </div>
+    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="สลับธีมสว่าง/มืด" title="สลับธีมสว่าง/มืด"></button>
+  </div>
+
+  <div class="card">
+    <div class="form-panel">
+      <div class="unit-toggle" role="group" aria-label="เลือกหน่วย">
+        <button type="button" id="btn-metric" class="active">เมตริก (ซม. / กก.)</button>
+        <button type="button" id="btn-imperial">อังกฤษ (นิ้ว / ปอนด์)</button>
+      </div>
+
+      <div class="field">
+        <label for="height">ส่วนสูง</label>
+        <div class="input-row">
+          <input type="number" id="height" inputmode="decimal" placeholder="เช่น 170" min="0">
+          <span class="unit-suffix" id="height-unit">ซม.</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="weight">น้ำหนัก</label>
+        <div class="input-row">
+          <input type="number" id="weight" inputmode="decimal" placeholder="เช่น 65" min="0">
+          <span class="unit-suffix" id="weight-unit">กก.</span>
+        </div>
+      </div>
+
+      <div class="result-block" aria-live="polite">
+        <div class="bmi-number" id="bmi-number">--</div>
+        <div class="bmi-category" id="bmi-category">กรอกส่วนสูงและน้ำหนัก</div>
+        <p class="bmi-hint">เกณฑ์อ้างอิงสำหรับคนเอเชีย (กรมอนามัย กระทรวงสาธารณสุข): &lt;18.5 ผอม · 18.5–22.9 ปกติ · 23–24.9 ท้วม · 25–29.9 อ้วน · ≥30 อ้วนมาก</p>
+        <p class="ideal-weight" id="ideal-weight"></p>
+
+        <div class="advice-block" id="advice-block">
+          <p class="advice-title">วิธีดูแลตัวเอง</p>
+          <p class="advice-text" id="advice-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="gauge-panel">
+      <p class="gauge-label">ตำแหน่งบนสเกล</p>
+      <div class="gauge-area">
+        <div class="gauge-ticks">
+          <span>35</span><span>30</span><span>25</span><span>23</span><span>18.5</span><span>14</span>
+        </div>
+        <div class="gauge-bar">
+          <div class="gauge-marker" id="gauge-marker">
+            <span class="pin"></span>
+            <span class="tag" id="gauge-tag">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="gauge-legend">
+        <div class="row"><span class="dot" style="background:var(--c-under)"></span>ผอม</div>
+        <div class="row"><span class="dot" style="background:var(--c-normal)"></span>ปกติ</div>
+        <div class="row"><span class="dot" style="background:var(--c-over)"></span>ท้วม</div>
+        <div class="row"><span class="dot" style="background:var(--c-obese1)"></span>อ้วน</div>
+        <div class="row"><span class="dot" style="background:var(--c-obese2)"></span>อ้วนมาก</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const heightInput = document.getElementById('height');
+  const weightInput = document.getElementById('weight');
+  const heightUnitLabel = document.getElementById('height-unit');
+  const weightUnitLabel = document.getElementById('weight-unit');
+  const btnMetric = document.getElementById('btn-metric');
+  const btnImperial = document.getElementById('btn-imperial');
+
+  const bmiNumberEl = document.getElementById('bmi-number');
+  const bmiCategoryEl = document.getElementById('bmi-category');
+  const idealWeightEl = document.getElementById('ideal-weight');
+  const adviceBlockEl = document.getElementById('advice-block');
+  const adviceTextEl = document.getElementById('advice-text');
+  const markerEl = document.getElementById('gauge-marker');
+  const tagEl = document.getElementById('gauge-tag');
+  const themeToggleBtn = document.getElementById('theme-toggle');
+
+  let unit = 'metric';
+
+  const GAUGE_MIN = 14;
+  const GAUGE_MAX = 35;
+
+  const SUN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"></circle><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8"></path></svg>';
+  const MOON_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"></path></svg>';
+
+  const ADVICE = {
+    under: 'น้ำหนักของคุณต่ำกว่าเกณฑ์ ลองเพิ่มพลังงานด้วยอาหารคุณภาพดี เช่น โปรตีนและไขมันดี กินให้ครบหมู่และบ่อยขึ้น ออกกำลังกายแบบสร้างกล้ามเนื้อจะช่วยเพิ่มน้ำหนักอย่างมีคุณภาพ หากน้ำหนักลดลงโดยไม่ได้ตั้งใจ ควรพบแพทย์เพื่อตรวจหาสาเหตุ',
+    normal: 'ยินดีด้วย น้ำหนักของคุณอยู่ในเกณฑ์ปกติ รักษาสมดุลด้วยการกินอาหารหลากหลาย ออกกำลังกายสม่ำเสมอ นอนหลับให้เพียงพอ และตรวจสุขภาพประจำปีเพื่อติดตามอย่างต่อเนื่อง',
+    over: 'น้ำหนักเริ่มเกินเกณฑ์เล็กน้อย ลองปรับพฤติกรรมการกิน ลดอาหารที่มีน้ำตาลและไขมันสูง เพิ่มผักผลไม้ และขยับร่างกายให้มากขึ้นในชีวิตประจำวัน เช่น เดินหรือขึ้นบันไดแทนลิฟต์',
+    obese1: 'น้ำหนักอยู่ในเกณฑ์โรคอ้วนระดับ 1 ซึ่งเพิ่มความเสี่ยงต่อโรคเรื้อรัง เช่น เบาหวานและความดันโลหิตสูง แนะนำให้ปรับอาหารและเพิ่มการออกกำลังกายอย่างจริงจัง และปรึกษาแพทย์หรือนักกำหนดอาหารเพื่อวางแผนที่เหมาะกับคุณ',
+    obese2: 'น้ำหนักอยู่ในเกณฑ์โรคอ้วนระดับ 2 ซึ่งมีความเสี่ยงสูงต่อโรคแทรกซ้อน ควรปรึกษาแพทย์เพื่อประเมินสุขภาพและวางแผนลดน้ำหนักอย่างปลอดภัยและเหมาะสมกับร่างกายของคุณ'
+  };
+
+  function setTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    themeToggleBtn.innerHTML = theme === 'dark' ? SUN_ICON : MOON_ICON;
+  }
+
+  function setUnit(next){
+    unit = next;
+    btnMetric.classList.toggle('active', unit === 'metric');
+    btnImperial.classList.toggle('active', unit === 'imperial');
+    heightUnitLabel.textContent = unit === 'metric' ? 'ซม.' : 'นิ้ว';
+    weightUnitLabel.textContent = unit === 'metric' ? 'กก.' : 'ปอนด์';
+    heightInput.placeholder = unit === 'metric' ? 'เช่น 170' : 'เช่น 67';
+    weightInput.placeholder = unit === 'metric' ? 'เช่น 65' : 'เช่น 143';
+    calculate();
+  }
+
+  function categoryFor(bmi){
+    if (bmi < 18.5) return { key: 'under',  label: 'น้ำหนักต่ำกว่าเกณฑ์ (ผอม)',        color: 'var(--c-under)'  };
+    if (bmi < 23)   return { key: 'normal', label: 'น้ำหนักปกติ',                       color: 'var(--c-normal)' };
+    if (bmi < 25)   return { key: 'over',   label: 'น้ำหนักเกิน (ท้วม)',                color: 'var(--c-over)'   };
+    if (bmi < 30)   return { key: 'obese1', label: 'โรคอ้วนระดับ 1',                    color: 'var(--c-obese1)' };
+    return            { key: 'obese2', label: 'โรคอ้วนระดับ 2 (อ้วนมาก)',          color: 'var(--c-obese2)' };
+  }
+
+  function idealWeightRange(h){
+    if (unit === 'metric'){
+      const hm = h / 100;
+      return [18.5 * hm * hm, 22.9 * hm * hm];
+    }
+    return [(18.5 * h * h) / 703, (22.9 * h * h) / 703];
+  }
+
+  function updateIdealWeight(h){
+    if (!h || h <= 0){
+      idealWeightEl.textContent = '';
+      return;
+    }
+    const [lo, hi] = idealWeightRange(h);
+    const wUnit = unit === 'metric' ? 'กก.' : 'ปอนด์';
+    idealWeightEl.textContent = 'น้ำหนักที่เหมาะสมสำหรับส่วนสูงนี้: ' + lo.toFixed(1) + '–' + hi.toFixed(1) + ' ' + wUnit;
+  }
+
+  function calculate(){
+    const h = parseFloat(heightInput.value);
+    const w = parseFloat(weightInput.value);
+
+    updateIdealWeight(h);
+
+    if (!h || !w || h <= 0 || w <= 0){
+      bmiNumberEl.textContent = '--';
+      bmiCategoryEl.textContent = 'กรอกส่วนสูงและน้ำหนัก';
+      bmiCategoryEl.style.color = 'var(--ink-soft)';
+      markerEl.style.bottom = '0%';
+      tagEl.textContent = '--';
+      tagEl.style.background = 'var(--ink)';
+      adviceBlockEl.style.display = 'none';
+      return;
+    }
+
+    let bmi;
+    if (unit === 'metric'){
+      const heightM = h / 100;
+      bmi = w / (heightM * heightM);
+    } else {
+      bmi = (703 * w) / (h * h);
+    }
+
+    const cat = categoryFor(bmi);
+    bmiNumberEl.textContent = bmi.toFixed(1);
+    bmiCategoryEl.textContent = cat.label;
+    bmiCategoryEl.style.color = cat.color;
+
+    const clamped = Math.min(Math.max(bmi, GAUGE_MIN), GAUGE_MAX);
+    const pct = ((clamped - GAUGE_MIN) / (GAUGE_MAX - GAUGE_MIN)) * 100;
+    markerEl.style.bottom = pct + '%';
+    tagEl.textContent = bmi.toFixed(1);
+    tagEl.style.background = cat.color;
+
+    adviceTextEl.textContent = ADVICE[cat.key];
+    adviceBlockEl.style.display = 'block';
+  }
+
+  btnMetric.addEventListener('click', () => setUnit('metric'));
+  btnImperial.addEventListener('click', () => setUnit('imperial'));
+  heightInput.addEventListener('input', calculate);
+  weightInput.addEventListener('input', calculate);
+  themeToggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  setTheme('light');
+  calculate();
+</script>
+
+</body>
+</html>
